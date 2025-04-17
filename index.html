@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de Matrices</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      font-family: 'Dancing Script', cursive;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #2c3e50;
+    }
+
+    .app-container {
+      background: #ecf0f1;
+      padding: 2rem 3rem;
+      border-radius: 20px;
+      box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+      max-width: 1000px;
+      width: 95%;
+      transition: all 0.3s ease-in-out;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      color: #34495e;
+    }
+
+    .matrix-size, .controls {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="number"], select, button {
+      padding: 10px 16px;
+      margin: 8px;
+      border-radius: 10px;
+      border: 1px solid #bdc3c7;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #219150;
+    }
+
+    .matrix-inputs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .matrix {
+      margin: 1rem 0;
+      text-align: center;
+      flex: 1 1 40%;
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    .matrix-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+
+    .matrix-row input {
+      width: 60px;
+      height: 35px;
+      margin: 4px;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: #f8f9fa;
+    }
+
+    .result h2 {
+      margin-top: 1rem;
+      color: #2d3436;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      resize: none;
+      font-family: monospace;
+      font-size: 1rem;
+      background-color: #fdfefe;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>💠 Calculadora de Matrices</h1>
+    <div class="matrix-size">
+      Filas: <input type="number" id="rows" value="2" min="1" />
+      Columnas: <input type="number" id="cols" value="2" min="1" />
+      <button onclick="generarMatrices()">Generar</button>
+    </div>
+
+    <div class="matrix-inputs" id="matrixInputs"></div>
+
+    <div class="controls">
+      <select id="operacion">
+        <option value="suma">Sumar A + B</option>
+        <option value="resta">Restar A - B</option>
+        <option value="multiplicacion">Multiplicar A x B</option>
+        <option value="inversa">Inversa de A</option>
+        <option value="determinante">Determinante de A</option>
+        <option value="adjunta">Matriz Adjunta de A</option>
+      </select>
+      <button onclick="calcular()">Calcular</button>
+    </div>
+
+    <div class="result">
+      <h2>Resultado:</h2>
+      <textarea readonly id="resultado"></textarea>
+
+      <h2>Procedimiento:</h2>
+      <textarea readonly id="procedimiento"></textarea>
+    </div>
+  </div>
+  <script>
+    function generarMatrices() {
+      const rows = parseInt(document.getElementById('rows').value);
+      const cols = parseInt(document.getElementById('cols').value);
+      const container = document.getElementById('matrixInputs');
+      container.innerHTML = '';
+
+      ['A', 'B'].forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'matrix';
+        div.innerHTML = `<strong>Matriz ${name}</strong>`;
+        for (let i = 0; i < rows; i++) {
+          const row = document.createElement('div');
+          row.className = 'matrix-row';
+          for (let j = 0; j < cols; j++) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `${name}-${i}-${j}`;
+            input.value = 0;
+            row.appendChild(input);
+          }
+          div.appendChild(row);
+        }
+        container.appendChild(div);
+      });
+    }
+
+    function getMatrix(name) {
+      const rows = parseInt(document.getElementById('rows').value);
+      const cols = parseInt(document.getElementById('cols').value);
+      const matrix = [];
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+          row.push(parseFloat(document.getElementById(`${name}-${i}-${j}`).value));
+        }
+        matrix.push(row);
+      }
+      return matrix;
+    }
+
+    function formatMatrixFraction(matrix) {
+      return matrix.map(row => row.map(val => math.fraction(val).toString()));
+    }
+
+    function calcular() {
+      const operacion = document.getElementById('operacion').value;
+      const resultadoEl = document.getElementById('resultado');
+      const procedimientoEl = document.getElementById('procedimiento');
+      try {
+        const A = getMatrix('A');
+        const B = getMatrix('B');
+        let resultado = '';
+        let procedimiento = '';
+
+        switch (operacion) {
+          case 'suma':
+            resultado = math.add(A, B);
+            procedimiento = 'Se suman elemento a elemento:
+A + B';
+            break;
+          case 'resta':
+            resultado = math.subtract(A, B);
+            procedimiento = 'Se restan elemento a elemento:
+A - B';
+            break;
+          case 'multiplicacion':
+            resultado = math.multiply(A, B);
+            procedimiento = 'Multiplicación fila x columna:
+A × B';
+            break;
+          case 'inversa':
+            resultado = math.inv(A);
+            procedimiento = 'Se obtiene la inversa de A usando métodos algebraicos.
+inv(A)';
+            break;
+          case 'determinante':
+            resultado = math.det(A);
+            procedimiento = 'Determinante de A calculado por cofactores o recursividad.
+|A|';
+            break;
+          case 'adjunta':
+            resultado = math.transpose(math.map(math.inv(A), x => x * math.det(A)));
+            procedimiento = 'La matriz adjunta de A se obtiene como la transpuesta de la matriz de cofactores.
+Adj(A)';
+            break;
+        }
+
+        if (Array.isArray(resultado)) {
+          const formatted = formatMatrixFraction(resultado);
+          resultadoEl.value = formatted.map(row => row.join("  ")).join("
+");
+        } else {
+          resultadoEl.value = resultado.toString();
+        }
+
+        procedimientoEl.value = procedimiento;
+      } catch (err) {
+        resultadoEl.value = '';
+        procedimientoEl.value = 'Error: ' + err.message;
+      }
+    }
+
+    window.onload = generarMatrices;
+  </script>
+</body>
+</html>
